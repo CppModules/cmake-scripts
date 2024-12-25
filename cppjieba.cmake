@@ -1,0 +1,5 @@
+target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/cppjieba/include)
+target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/cppjieba/deps/limonp/include)
+add_subdirectory(${CPPMODULE_ROOTPATH}/cppjieba ${CPPMODULE_BINARY_SUBDIR}/cppjieba)
+set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} cppjieba_static)
+set(CPPMODULE_LINK_LIBRARIES_CPPJIEBA cppjieba_static)

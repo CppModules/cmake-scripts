@@ -1,0 +1,1 @@
+target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/SRELL)
