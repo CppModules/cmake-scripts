@@ -59,5 +59,5 @@ else ()
 endif ()
 
 target_compile_definitions(cmake_include_interface INTERFACE -DCPPMODULE_PROJECT_ROOT_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}\")
-set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} cmake_include_interface  CACHE INTERNAL "Many Librarys")
-set(CPPMODULE_LINK_LIBRARIES_BASE cmake_include_interface CACHE INTERNAL "Many Librarys")
+set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} cmake_include_interface)
+set(CPPMODULE_LINK_LIBRARIES_BASE cmake_include_interface)
