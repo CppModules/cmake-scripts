@@ -1,5 +1,5 @@
 
-CHECK_SUB(CPPMODULE_SDL CPPMODULE_FREETYPE2)
+#CHECK_SUB(CPPMODULE_SDL CPPMODULE_FREETYPE2)
 
 include_directories(${CPPMODULE_ROOTPATH}/lvgl)
 set(BUILD_SHARED_LIBS OFF)
@@ -64,9 +64,10 @@ endif ()
 
 
 include_directories("${CPPMODULE_ROOTPATH}/lvgl/src")
-set(LVGL_CFG_TEMPLATE_HEADER "${CPPMODULE_ROOTPATH}/lvgl/lv_conf_template.h.in")
+#set(LVGL_CFG_TEMPLATE_HEADER "${CPPMODULE_ROOTPATH}/lvgl/lv_conf_template.h.in")
 configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CPPMODULE_ROOTPATH}/lvgl/lv_conf.h" @ONLY)
 configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CPPMODULE_ROOTPATH}/lvgl/src/lv_conf.h" @ONLY)
 add_subdirectory(${CPPMODULE_ROOTPATH}/lvgl ${CPPMODULE_BINARY_SUBDIR}/lvgl)
 set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} lvgl::lvgl)
 set(CPPMODULE_LINK_LIBRARIES_GPTSOVITSCPP lvgl::lvgl)
+target_include_directories(cmake_include_interface INTERFACE "${CPPMODULE_ROOTPATH}/lvgl/src")

@@ -1,3 +1,4 @@
+include_directories(${CPPMODULE_ROOTPATH}/freetype2/include)
 target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/freetype2/include)
 target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_BINARY_SUBDIR}/freetype2/include)
 #  add_subdirectory(${CPPMODULE_ROOTPATH}/freetype2 ${CPPMODULE_BINARY_SUBDIR}/freetype2)

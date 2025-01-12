@@ -26,6 +26,10 @@ else ()
 #  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
 endif ()
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Default build type" FORCE)
+endif()
+
 if (MSVC)
 
   set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /NODEFAULTLIB:msvcrt.lib")
