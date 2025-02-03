@@ -1,0 +1,5 @@
+include_directories(${CPPMODULE_ROOTPATH}/portaudio/include)
+target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/portaudio/include)
+add_subdirectory(${CPPMODULE_ROOTPATH}/portaudio ${CPPMODULE_BINARY_SUBDIR}/portaudio)
+set(CPPMODULE_LINK_LIBRARIES_PORTAUDIO portaudio)
+set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} ${CPPMODULE_LINK_LIBRARIES_PORTAUDIO})
