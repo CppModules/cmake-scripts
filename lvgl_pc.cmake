@@ -10,7 +10,8 @@ set(LVGL_CFG_COLOR_DEPTH 32)
 set(LVGL_CFG_USE_FREETYPE 1)
 
 # TODO: RTOS可以更换
-set(LVGL_CFG_USE_STDLIB LV_STDLIB_CLIB)
+#set(LVGL_CFG_USE_STDLIB LV_STDLIB_CLIB)
+set(LVGL_CFG_USE_STDLIB LV_STDLIB_BUILTIN)
 
 # 启用矩阵变换
 set(LVGL_CFG_DRAW_TRANSFORM_USE_MATRIX 1)
@@ -34,6 +35,8 @@ set(LVGL_CFG_USE_WAYLAND 0)
 set(LVGL_CFG_USE_NUTTX 0)
 # Framebuffer
 set(LVGL_CFG_USE_LINUX_FBDEV 0)
+
+
 
 # 系统支持
 set(LVGL_CFG_USE_OS "LV_OS_NONE")
@@ -68,6 +71,7 @@ include_directories("${CPPMODULE_ROOTPATH}/lvgl/src")
 configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CPPMODULE_ROOTPATH}/lvgl/lv_conf.h" @ONLY)
 configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CPPMODULE_ROOTPATH}/lvgl/src/lv_conf.h" @ONLY)
 add_subdirectory(${CPPMODULE_ROOTPATH}/lvgl ${CPPMODULE_BINARY_SUBDIR}/lvgl)
+#target_compile_options(lvgl::lvgl PUBLIC /utf-8 )
 set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} lvgl::lvgl)
 set(CPPMODULE_LINK_LIBRARIES_GPTSOVITSCPP lvgl::lvgl)
 target_include_directories(cmake_include_interface INTERFACE "${CPPMODULE_ROOTPATH}/lvgl/src")
