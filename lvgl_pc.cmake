@@ -39,39 +39,33 @@ set(LVGL_CFG_USE_LINUX_FBDEV 0)
 
 
 # 系统支持
-set(LVGL_CFG_USE_OS "LV_OS_NONE")
 if (WIN32)
-  #    set(LVGL_CFG_USE_OS "LV_OS_NONE")
-  set(LVGL_CFG_USE_SDL 1)
-  #    set(LVGL_CFG_USE_GPU 1)
+SET(TEMPLATE_FILE "lv_cong_template_win.h.in")
 elseif (ANDROID)
-  #    set(LVGL_CFG_USE_OS "LV_OS_NONE")
-  set(LVGL_CFG_USE_OPENGLES 1)
-  #    set(LVGL_CFG_USE_GPU 1)
+
 elseif (UNIX)
-  #    set(LVGL_CFG_USE_OS "LV_OS_PTHREAD")
-  set(LVGL_CFG_USE_SDL 1)
-  #    set(LVGL_CFG_USE_GPU 1)
+
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "STM32")
-  #    set(LVGL_CFG_USE_OS "LV_OS_NONE")
-  set(LVGL_CFG_USE_DMA2D 1)
+
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeRTOS")
-  #    set(LVGL_CFG_USE_OS "LV_OS_FREERTOS")
+
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "RT-Thread")
-  #    set(LVGL_CFG_USE_OS "LV_OS_RTTHREAD")
+
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "MQX")
-  #    set(LVGL_CFG_USE_OS "LV_OS_MQX")
+
 else ()
   set(LVGL_CFG_USE_OS "LV_OS_NONE")
 endif ()
 
 
+include_directories("${CPPMODULE_ROOTPATH}")
 include_directories("${CPPMODULE_ROOTPATH}/lvgl/src")
-#set(LVGL_CFG_TEMPLATE_HEADER "${CPPMODULE_ROOTPATH}/lvgl/lv_conf_template.h.in")
-configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CPPMODULE_ROOTPATH}/lvgl/lv_conf.h" @ONLY)
-configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CPPMODULE_ROOTPATH}/lvgl/src/lv_conf.h" @ONLY)
+set(LVGL_CFG_TEMPLATE_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/privately/${TEMPLATE_FILE}")
+#configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CPPMODULE_ROOTPATH}/lvgl/lv_conf.h" @ONLY)
+configure_file(${LVGL_CFG_TEMPLATE_HEADER} "${CMAKE_SOURCE_DIR}/lv_conf.h" @ONLY)
 add_subdirectory(${CPPMODULE_ROOTPATH}/lvgl ${CPPMODULE_BINARY_SUBDIR}/lvgl)
 #target_compile_options(lvgl::lvgl PUBLIC /utf-8 )
 set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} lvgl::lvgl)
 set(CPPMODULE_LINK_LIBRARIES_GPTSOVITSCPP lvgl::lvgl)
+target_include_directories(cmake_include_interface INTERFACE "${CPPMODULE_ROOTPATH}")
 target_include_directories(cmake_include_interface INTERFACE "${CPPMODULE_ROOTPATH}/lvgl/src")
