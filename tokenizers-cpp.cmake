@@ -1,16 +1,11 @@
-if (NOT EXISTS "${CPPMODULE_ROOTPATH}/tokenizers-cpp")
+include_guard(GLOBAL)
+include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
 
-  message("Initial tokenizers-cpp submodules")
-  execute_process(
-      COMMAND git submodule update --init
-      WORKING_DIRECTORY ${CPPMODULE_ROOTPATH}/tokenizers-cpp
-      RESULT_VARIABLE result
-  )
-  if (NOT result EQUAL 0)
-    message(FATAL_ERROR "tokenizers-cpp: Failed to initialize and update git submodules")
-  endif ()
-endif ()
-add_subdirectory(${CPPMODULE_ROOTPATH}/tokenizers-cpp ${CPPMODULE_BINARY_SUBDIR}/tokenizers-cpp)
-target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/tokenizers-cpp/include)
-set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} tokenizers_cpp)
-set(CPPMODULE_LINK_LIBRARIES_TOKENIZERS tokenizers_cpp)
+if(NOT TARGET tokenizers_cpp)
+    cppmodule_add_subdirectory(tokenizers-cpp "${CPPMODULE_ROOTPATH}/tokenizers-cpp")
+endif()
+
+if(NOT TARGET cppmodule::tokenizers)
+    add_library(cppmodule::tokenizers INTERFACE IMPORTED GLOBAL)
+    target_link_libraries(cppmodule::tokenizers INTERFACE tokenizers_cpp)
+endif()

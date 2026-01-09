@@ -1,6 +1,11 @@
-target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/cpp-pinyin/include)
-set(CPP_PINYIN_BUILD_TESTS OFF)
-set(CPP_PINYIN_INSTALL OFF)
-add_subdirectory(${CPPMODULE_ROOTPATH}/cpp-pinyin ${CPPMODULE_BINARY_SUBDIR}/cpp-pinyin)
-set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} cpp-pinyin::cpp-pinyin)
-set(CPPMODULE_LINK_LIBRARIES_CPPPINYIN cpp-pinyin::cpp-pinyin)
+include_guard(GLOBAL)
+include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
+
+if(NOT TARGET cpp-pinyin)
+    cppmodule_add_subdirectory(cpp-pinyin "${CPPMODULE_ROOTPATH}/cpp-pinyin")
+endif()
+
+if(NOT TARGET cppmodule::pinyin)
+    add_library(cppmodule::pinyin INTERFACE IMPORTED GLOBAL)
+    target_link_libraries(cppmodule::pinyin INTERFACE cpp-pinyin)
+endif()

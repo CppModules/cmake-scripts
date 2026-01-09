@@ -1,69 +1,51 @@
-add_library(cmake_include_interface INTERFACE)
+include_guard(GLOBAL)
 
-set(CPPMODULE_ROOTPATH ${CMAKE_CURRENT_LIST_DIR}/../third_party  CACHE INTERNAL "CPPMODULE_ROOTPATH")
+# --- 全局静态编译约束 ---
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking" FORCE)
 
-set(CPPMODULE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
-message("CPPMODULE_ROOTPATH=${CPPMODULE_ROOTPATH}")
-
-message("Check Variables")
-if (CPPMODULE_BINARY_DIR)
-  message("CPPMODULE_BINARY_DIR=${CPPMODULE_BINARY_DIR}")
-  set(CPPMODULE_BINARY_SUBDIR ${CPPMODULE_BINARY_DIR}/third_party)
-else ()
-  message(FATAL_ERROR "CPPMODULE_BINARY_DIR is not defined. Please define it.
-Example:
-set(CPPMODULE_BINARY_DIR \${CMAKE_CURRENT_BINARY_DIR})")
-endif ()
-
-if (MSVC)
-  #  add_compile_options(/source-charset:utf-8 /execution-charset:utf-8)
-  #  add_compile_options(/utf-8)
-  #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8"  CACHE INTERNAL "cmake c flags")
-  #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8" CACHE INTERNAL "cmake cxx flags")
-  #  target_compile_options(cmake_include_interface INTERFACE /utf-8 )
-  add_compile_options("/utf-8")
-else ()
-  #  target_compile_options(cmake_include_interface INTERFACE -finput-charset=UTF-8 -fexec-charset=UTF-8)
-  #  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
-  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
-endif ()
-
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Default build type" FORCE)
+if(MSVC)
+    # 强制所有依赖使用静态运行时库 (/MT 或 /MTd)
+    # 这样可以保证生成的 .exe 不依赖 msvcp140.dll 等
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
+    add_compile_options("/utf-8")
+else()
+    add_compile_options("-finput-charset=UTF-8" "-fexec-charset=UTF-8")
 endif()
 
-if (MSVC)
+# --- 路径探测逻辑 ---
+# 自动定位 third_party 目录，支持多级嵌套项目
+if(NOT CPPMODULE_ROOTPATH)
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/../third_party")
+        set(CPPMODULE_ROOTPATH "${CMAKE_CURRENT_LIST_DIR}/../third_party" CACHE PATH "Path to third_party")
+    elseif(EXISTS "${CMAKE_SOURCE_DIR}/third_party")
+        set(CPPMODULE_ROOTPATH "${CMAKE_SOURCE_DIR}/third_party" CACHE PATH "Path to third_party")
+    endif()
+endif()
 
-  set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /NODEFAULTLIB:msvcrt.lib")
-  set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} legacy_stdio_definitions.lib)
+message(STATUS "[CppModule] RootPath: ${CPPMODULE_ROOTPATH}")
 
-  #  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /NODEFAULTLIB:msvcrt.lib")
-endif ()
+# --- 辅助宏 ---
 
-# =========
+# 保护性添加子目录 (防止重复 add_subdirectory 导致的报错)
+macro(cppmodule_add_subdirectory NAME PATH)
+    if(NOT TARGET ${NAME})
+        if(EXISTS "${PATH}/CMakeLists.txt")
+            # 使用 EXCLUDE_FROM_ALL 确保只编译被引用的部分
+            add_subdirectory("${PATH}" "${CMAKE_BINARY_DIR}/_deps/${NAME}-build" EXCLUDE_FROM_ALL)
+        else()
+            message(WARNING "[CppModule] ${NAME} not found at ${PATH}")
+        endif()
+    endif()
+endmacro()
 
-set(CPPMODULE_LINK_ALL_LIBRARIES "")
-set(CPPMODULE_LINK_SOURCES "")
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Android")
-  set(OS_IS_ANDROID TRUE)
-  target_compile_definitions(cmake_include_interface INTERFACE -D_HOST_ANDROID_)
-elseif ((CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin"))
-  set(OS_IS_APPLE TRUE  CACHE INTERNAL "System Type")
-  target_compile_definitions(cmake_include_interface INTERFACE -D_HOST_APPLE_)
-elseif (CMAKE_HOST_WIN32)
-  set(OS_IS_WINDOWS TRUECACHE  CACHE INTERNAL "System Type")
-  target_compile_definitions(cmake_include_interface INTERFACE -D_HOST_WINDOWS_)
-  if ()
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-  endif ()
-elseif (CMAKE_HOST_UNIX)
-  set(OS_IS_LINUX TRUECACHE  CACHE INTERNAL "System Type")
-  target_compile_definitions(cmake_include_interface INTERFACE -D_HOST_LINUX_)
-else ()
-  message(FATAL_ERROR "The platform is not currently supported")
-endif ()
-
-target_compile_definitions(cmake_include_interface INTERFACE -DCPPMODULE_PROJECT_ROOT_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}\")
-set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} cmake_include_interface)
-set(CPPMODULE_LINK_LIBRARIES_BASE cmake_include_interface)
+# 基础接口 Target，所有项目都应链接此目标以获得全局宏定义
+if(NOT TARGET cppmodule::base)
+    add_library(cppmodule::base INTERFACE IMPORTED GLOBAL)
+    target_compile_definitions(cppmodule::base INTERFACE 
+        -DCPPMODULE_PROJECT_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}"
+        $<$<PLATFORM_ID:Windows>:_HOST_WINDOWS_>
+        $<$<PLATFORM_ID:Linux>:_HOST_LINUX_>
+        $<$<PLATFORM_ID:Android>:_HOST_ANDROID_>
+        $<$<PLATFORM_ID:Darwin>:_HOST_APPLE_>
+    )
+endif()

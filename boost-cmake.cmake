@@ -1,48 +1,43 @@
-set(__CPPMODULE_TEMP_BOOST_LIB__
-    Boost::boost
-    Boost::system Boost::atomic
-    Boost::thread
-    Boost::context
-    Boost::coroutine
-    Boost::chrono
-    Boost::filesystem
-    Boost::date_time
-    Boost::regex
-    Boost::timer
-    Boost::exception
-    Boost::random
-    Boost::program_options
-    Boost::asio
-    Boost::test
-    Boost::beast
-)
+include_guard(GLOBAL)
+include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
 
+# Boost-cmake 配置
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 
-if ((CPPMODULE_BOOSTCMAKE_ENABLE_ALL OR CPPMODULE_BOOSTCMAKE_ENABLE_SERIALIZATION) AND NOT CPPMODULE_BOOSTCMAKE_DISABLE_SERIALIZATION)
-  set(USE_BOOST_SERIALIZATION ON)
-  set(__CPPMODULE_TEMP_BOOST_LIB__ ${__CPPMODULE_TEMP_BOOST_LIB__}
-      Boost::serialization
-  )
-endif ()
+# 根据用户变量配置 Boost 组件
+if(CPPMODULE_BOOSTCMAKE_ENABLE_ALL)
+    set(USE_BOOST_SERIALIZATION ON)
+    set(USE_BOOST_FIBER ON)
+    set(USE_BOOST_LOCALE ON)
+endif()
 
-if ((CPPMODULE_BOOSTCMAKE_ENABLE_ALL OR CPPMODULE_BOOSTCMAKE_ENABLE_FIBER) AND NOT CPPMODULE_BOOSTCMAKE_DISABLE_FIBER)
-  set(USE_BOOST_FIBER ON)
-  set(__CPPMODULE_TEMP_BOOST_LIB__ ${__CPPMODULE_TEMP_BOOST_LIB__}
-      Boost::fiber
-  )
-endif ()
+if(NOT TARGET boost-cmake)
+    cppmodule_add_subdirectory(boost-cmake "${CPPMODULE_ROOTPATH}/boost-cmake")
+endif()
 
-if ((CPPMODULE_BOOSTCMAKE_ENABLE_ALL OR CPPMODULE_BOOSTCMAKE_ENABLE_LOCALE) AND NOT CPPMODULE_BOOSTCMAKE_DISABLE_LOCALE)
-  set(USE_BOOST_LOCALE ON)
-  set(__CPPMODULE_TEMP_BOOST_LIB__ ${__CPPMODULE_TEMP_BOOST_LIB__}
-      Boost::locale
-  )
-endif ()
+if(NOT TARGET cppmodule::boost)
+    add_library(cppmodule::boost INTERFACE IMPORTED GLOBAL)
+    
+    # 定义基础依赖
+    set(_BOOST_LIBS 
+        Boost::boost Boost::system Boost::atomic Boost::thread 
+        Boost::context Boost::coroutine Boost::chrono Boost::filesystem 
+        Boost::date_time Boost::regex Boost::timer Boost::exception 
+        Boost::random Boost::program_options Boost::asio Boost::beast
+    )
+    
+    # 动态添加组件
+    if(USE_BOOST_SERIALIZATION)
+        list(APPEND _BOOST_LIBS Boost::serialization)
+    endif()
+    if(USE_BOOST_FIBER)
+        list(APPEND _BOOST_LIBS Boost::fiber)
+    endif()
+    if(USE_BOOST_LOCALE)
+        list(APPEND _BOOST_LIBS Boost::locale)
+    endif()
 
-add_subdirectory(${CPPMODULE_ROOTPATH}/boost-cmake ${CPPMODULE_BINARY_SUBDIR}/boost-cmake)
-target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/boost-cmake)
-
-set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} ${__CPPMODULE_TEMP_BOOST_LIB__})
-set(CPPMODULE_LINK_LIBRARIES_BOOSTCMAKE ${__CPPMODULE_TEMP_BOOST_LIB__})
+    target_link_libraries(cppmodule::boost INTERFACE ${_BOOST_LIBS})
+    target_include_directories(cppmodule::boost INTERFACE "${CPPMODULE_ROOTPATH}/boost-cmake")
+endif()
