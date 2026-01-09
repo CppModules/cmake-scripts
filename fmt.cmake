@@ -11,6 +11,5 @@ endif()
 
 if(NOT TARGET cppmodule::fmt)
     add_library(cppmodule::fmt INTERFACE IMPORTED GLOBAL)
-    # 链接到真正的 fmt 目标，并自动导出 include 路径
     target_link_libraries(cppmodule::fmt INTERFACE fmt)
 endif()

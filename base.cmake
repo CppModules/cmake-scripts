@@ -30,8 +30,8 @@ message(STATUS "[CppModule] RootPath: ${CPPMODULE_ROOTPATH}")
 macro(cppmodule_add_subdirectory NAME PATH)
     if(NOT TARGET ${NAME})
         if(EXISTS "${PATH}/CMakeLists.txt")
-            # 使用 EXCLUDE_FROM_ALL 确保只编译被引用的部分
-            add_subdirectory("${PATH}" "${CMAKE_BINARY_DIR}/_deps/${NAME}-build" EXCLUDE_FROM_ALL)
+
+            add_subdirectory("${PATH}" "${CMAKE_BINARY_DIR}/_deps/${NAME}-build" )
         else()
             message(WARNING "[CppModule] ${NAME} not found at ${PATH}")
         endif()
