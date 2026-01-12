@@ -1,4 +1,13 @@
-target_include_directories(cmake_include_interface INTERFACE ${CPPMODULE_ROOTPATH}/cld2-cmake/public)
-add_subdirectory(${CPPMODULE_ROOTPATH}/cld2-cmake ${CPPMODULE_BINARY_SUBDIR}/cld2-cmake)
-set(CPPMODULE_LINK_LIBRARIES_ALL ${CPPMODULE_LINK_LIBRARIES_ALL} CLD2-static)
-set(CPPMODULE_LINK_LIBRARIES_LIBCLD2 CLD2-static)
+
+include_guard(GLOBAL)
+include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
+
+if(NOT TARGET cld2_cmake)
+  cppmodule_add_subdirectory(cld2 "${CPPMODULE_ROOTPATH}/cld2-cmake")
+endif()
+
+if(NOT TARGET cppmodule::cld2_cmake)
+  add_library(cppmodule::cld2_cmake INTERFACE IMPORTED GLOBAL)
+  target_link_libraries(cppmodule::cld2_cmake INTERFACE CLD2-static)
+  target_include_directories(cppmodule::cld2_cmake INTERFACE ${CPPMODULE_ROOTPATH}/cld2-cmake/public)
+endif()

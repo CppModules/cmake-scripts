@@ -5,6 +5,6 @@ if(NOT TARGET cppmodule::cppjieba)
     add_library(cppmodule::cppjieba INTERFACE IMPORTED GLOBAL)
     target_include_directories(cppmodule::cppjieba INTERFACE 
         "${CPPMODULE_ROOTPATH}/cppjieba/include"
-        "${CPPMODULE_ROOTPATH}/cppjieba/deps"
+#        "${CPPMODULE_ROOTPATH}/cppjieba/deps/limonp/include"
     )
 endif()
