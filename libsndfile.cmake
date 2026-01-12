@@ -2,12 +2,9 @@ include_guard(GLOBAL)
 include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
 
 if(NOT TARGET sndfile)
-    if (MSVC)
-        unset(CMAKE_MSVC_RUNTIME_LIBRARY CACHE)
-        set(ENABLE_STATIC_RUNTIME ON)
-    else ()
-        set(ENABLE_STATIC_RUNTIME ON)
-    endif ()
+    # 确保不与 CMAKE_MSVC_RUNTIME_LIBRARY 冲突
+    unset(ENABLE_STATIC_RUNTIME CACHE)
+    
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(BUILD_REGTEST OFF CACHE BOOL "" FORCE)
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)

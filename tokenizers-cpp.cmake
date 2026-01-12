@@ -2,6 +2,9 @@ include_guard(GLOBAL)
 include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
 
 if(NOT TARGET tokenizers_cpp)
+    if(MSVC)
+        set(TOKENIZERS_CPP_MSVC_RUNTIME_LIBRARY "MT" CACHE STRING "" FORCE)
+    endif()
     cppmodule_add_subdirectory(tokenizers-cpp "${CPPMODULE_ROOTPATH}/tokenizers-cpp")
 endif()
 

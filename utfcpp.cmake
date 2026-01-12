@@ -7,6 +7,5 @@ endif()
 
 if(NOT TARGET cppmodule::utfcpp)
   add_library(cppmodule::utfcpp INTERFACE IMPORTED GLOBAL)
-  target_link_libraries(cppmodule::utfcpp INTERFACE utfcpp)
   target_include_directories(cppmodule::utfcpp INTERFACE ${CPPMODULE_ROOTPATH}/utfcpp/source)
 endif()
