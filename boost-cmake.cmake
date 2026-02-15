@@ -4,6 +4,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
 # Boost-cmake 配置
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
+if(APPLE)
+    add_definitions(-DAT_NO_AUTOMOUNT=0)
+endif()
 
 # 根据用户变量配置 Boost 组件
 if(CPPMODULE_BOOSTCMAKE_ENABLE_ALL)
