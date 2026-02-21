@@ -7,7 +7,7 @@ if(MSVC)
     # 强制所有依赖使用静态运行时库 (/MT 或 /MTd)
     # 这样可以保证生成的 .exe 不依赖 msvcp140.dll 等
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
-    add_compile_options("/utf-8")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/utf-8>)
 else()
     add_compile_options("-finput-charset=UTF-8" "-fexec-charset=UTF-8")
 endif()
