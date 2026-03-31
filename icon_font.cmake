@@ -82,9 +82,11 @@ function(target_link_icon_font target)
             "${LX_ICON_CODEPOINTS_FILE}"
             "${_header}"
         RESULT_VARIABLE _gen_result
+        OUTPUT_VARIABLE _gen_stdout
+        ERROR_VARIABLE  _gen_stderr
     )
     if(NOT _gen_result EQUAL 0)
-        message(WARNING "ICON_FONT: 码点头文件生成失败 (exit ${_gen_result})")
+        message(WARNING "ICON_FONT: 码点头文件生成失败 (exit ${_gen_result})\n-- stdout:\n${_gen_stdout}\n-- stderr:\n${_gen_stderr}")
         return()
     endif()
 
@@ -162,9 +164,11 @@ function(target_link_icon_font target)
                     "${_subset_ttf}"
                     ${_hex_list}
                 RESULT_VARIABLE _sub_result
+                OUTPUT_VARIABLE _sub_stdout
+                ERROR_VARIABLE  _sub_stderr
             )
             if(NOT _sub_result EQUAL 0)
-                message(WARNING "ICON_FONT: 字体裁剪失败 (exit ${_sub_result})，回退全量模式")
+                message(WARNING "ICON_FONT: 字体裁剪失败 (exit ${_sub_result})，回退全量模式\n-- stdout:\n${_sub_stdout}\n-- stderr:\n${_sub_stderr}")
                 file(COPY "${LX_ICON_FONT_FILE}" DESTINATION "${_embed_dir}")
             endif()
         else()
