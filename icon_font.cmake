@@ -2,11 +2,16 @@
 #
 # 用法:
 #   include(cmake/icon_font.cmake)
-#   target_link_icon_font(<target> [EMBED_DIR <dir>])
+#   target_link_icon_font(<target> [EMBED_DIR <dir>] [EXPORT_ICON_LIST] [IMPORT_FROM <dep1> <dep2> ...])
 #   target_link_embed(<target> [EMBED_DIR <dir>])
 #
 # 注意: target_link_icon_font 必须在 target_link_embed 之前调用,
 #       字体会被复制到 embed 目录，由 target_link_embed 统一嵌入。
+#
+# 库图标传递机制:
+#   - 库目标使用 EXPORT_ICON_LIST 导出扫描到的图标列表
+#   - 应用目标使用 IMPORT_FROM 导入依赖库的图标列表并合并
+#   - 确保 library 中使用的图标能传导到最终应用的字体裁剪
 #
 # CMake 选项:
 #   LX_ICON_FULL_FONT       - ON 时嵌入完整字体，跳过裁剪（默认 OFF）
@@ -37,12 +42,60 @@ else()
 endif()
 
 # ==============================================================================
-# target_link_icon_font(<target> [EMBED_DIR <dir>])
+# 内部函数：扫描源码中的 LX_ICON_* 宏，返回码点列表
+# ==============================================================================
+function(_lx_scan_icon_codepoints target out_var)
+    get_target_property(_sources ${target} SOURCES)
+    get_target_property(_source_dir ${target} SOURCE_DIR)
+
+    set(_all_codepoints "")
+    foreach(_src IN LISTS _sources)
+        if(NOT IS_ABSOLUTE "${_src}")
+            set(_src "${_source_dir}/${_src}")
+        endif()
+        if(EXISTS "${_src}")
+            file(STRINGS "${_src}" _matches REGEX "LX_ICON_[A-Z0-9_]+")
+            foreach(_match IN LISTS _matches)
+                string(REGEX MATCHALL "LX_ICON_[A-Z0-9_]+" _icons "${_match}")
+                list(APPEND _all_codepoints ${_icons})
+            endforeach()
+        endif()
+    endforeach()
+
+    if(_all_codepoints)
+        list(REMOVE_DUPLICATES _all_codepoints)
+    endif()
+
+    file(STRINGS "${LX_ICON_CODEPOINTS_FILE}" _cp_lines)
+    set(_hex_list "")
+    foreach(_icon IN LISTS _all_codepoints)
+        string(REGEX REPLACE "^LX_ICON_" "" _name "${_icon}")
+        string(TOLOWER "${_name}" _name)
+        foreach(_line IN LISTS _cp_lines)
+            string(REGEX MATCH "^${_name} ([0-9a-fA-F]+)" _m "${_line}")
+            if(_m)
+                list(APPEND _hex_list "${CMAKE_MATCH_1}")
+                break()
+            endif()
+        endforeach()
+    endforeach()
+
+    if(_hex_list)
+        list(REMOVE_DUPLICATES _hex_list)
+    endif()
+
+    set(${out_var} "${_hex_list}" PARENT_SCOPE)
+endfunction()
+
+# ==============================================================================
+# target_link_icon_font(<target> [EMBED_DIR <dir>] [EXPORT_ICON_LIST] [IMPORT_FROM <dep1> ...])
 #
 # 将裁剪后的字体复制到 EMBED_DIR，由后续 target_link_embed 统一嵌入。
+# EXPORT_ICON_LIST: 将扫描到的图标列表导出为目标属性（供下游目标导入）
+# IMPORT_FROM: 从指定依赖目标导入图标列表并合并
 # ==============================================================================
 function(target_link_icon_font target)
-    cmake_parse_arguments(_ARG "" "EMBED_DIR" "" ${ARGN})
+    cmake_parse_arguments(_ARG "EXPORT_ICON_LIST" "EMBED_DIR" "IMPORT_FROM" ${ARGN})
 
     set(_out_dir "${CMAKE_BINARY_DIR}/icon_gen/${target}")
     set(_header_dir "${_out_dir}/include")
@@ -93,7 +146,6 @@ function(target_link_icon_font target)
     target_include_directories(${target} PRIVATE "${_header_dir}")
 
     # ---- 生成 icon_font_data.h: 稳定的 embed 符号引用 ----
-    # 按 incbin.cmake 的规则计算字体文件的 embed 符号名
     set(_font_filename "MaterialSymbolsOutlined.ttf")
     file(RELATIVE_PATH _font_rel "${CMAKE_SOURCE_DIR}" "${_embed_dir}/${_font_filename}")
     string(REGEX REPLACE "^[/\\\\]+" "" _font_sym "${_font_rel}")
@@ -110,71 +162,58 @@ function(target_link_icon_font target)
         "#define LX_ICON_FONT_SIZE  ${_font_sym}_size\n"
     )
 
-    # ---- 步骤 2 & 3: 裁剪或全量复制到 embed 目录 ----
+    # ---- 步骤 2: 扫描本目标的图标码点 ----
+    _lx_scan_icon_codepoints(${target} _hex_list)
+
+    # ---- 步骤 3: 导入依赖目标的图标列表 ----
+    if(DEFINED _ARG_IMPORT_FROM)
+        foreach(_dep IN LISTS _ARG_IMPORT_FROM)
+            get_target_property(_dep_icons ${_dep} LX_ICON_EXPORTED_CODEPOINTS)
+            if(_dep_icons)
+                list(APPEND _hex_list ${_dep_icons})
+                message(STATUS "ICON_FONT: 从 ${_dep} 导入 ${_dep_icons} 个图标码点")
+            endif()
+        endforeach()
+    endif()
+
+    if(_hex_list)
+        list(REMOVE_DUPLICATES _hex_list)
+    endif()
+
+    # ---- 步骤 4: 导出图标列表（如果需要） ----
+    if(_ARG_EXPORT_ICON_LIST AND _hex_list)
+        set_target_properties(${target} PROPERTIES LX_ICON_EXPORTED_CODEPOINTS "${_hex_list}")
+        list(LENGTH _hex_list _count)
+        message(STATUS "ICON_FONT: ${target} 导出 ${_count} 个图标码点")
+    endif()
+
+    # ---- 步骤 5: 裁剪或全量复制到 embed 目录 ----
     set(_subset_ttf "${_embed_dir}/MaterialSymbolsOutlined.ttf")
 
     if(LX_ICON_FULL_FONT)
         file(COPY "${LX_ICON_FONT_FILE}" DESTINATION "${_embed_dir}")
         message(STATUS "ICON_FONT: 全量模式 (LX_ICON_FULL_FONT=ON)")
-    else()
-        get_target_property(_sources ${target} SOURCES)
-        get_target_property(_source_dir ${target} SOURCE_DIR)
+    elseif(_hex_list)
+        list(LENGTH _hex_list _count)
+        message(STATUS "ICON_FONT: 裁剪模式 - ${_count} 个图标码点")
 
-        set(_all_codepoints "")
-        foreach(_src IN LISTS _sources)
-            if(NOT IS_ABSOLUTE "${_src}")
-                set(_src "${_source_dir}/${_src}")
-            endif()
-            if(EXISTS "${_src}")
-                file(STRINGS "${_src}" _matches REGEX "LX_ICON_[A-Z0-9_]+")
-                foreach(_match IN LISTS _matches)
-                    string(REGEX MATCHALL "LX_ICON_[A-Z0-9_]+" _icons "${_match}")
-                    list(APPEND _all_codepoints ${_icons})
-                endforeach()
-            endif()
-        endforeach()
-
-        if(_all_codepoints)
-            list(REMOVE_DUPLICATES _all_codepoints)
-        endif()
-
-        file(STRINGS "${LX_ICON_CODEPOINTS_FILE}" _cp_lines)
-        set(_hex_list "")
-        foreach(_icon IN LISTS _all_codepoints)
-            string(REGEX REPLACE "^LX_ICON_" "" _name "${_icon}")
-            string(TOLOWER "${_name}" _name)
-            foreach(_line IN LISTS _cp_lines)
-                string(REGEX MATCH "^${_name} ([0-9a-fA-F]+)" _m "${_line}")
-                if(_m)
-                    list(APPEND _hex_list "${CMAKE_MATCH_1}")
-                    break()
-                endif()
-            endforeach()
-        endforeach()
-
-        if(_hex_list)
-            list(REMOVE_DUPLICATES _hex_list)
-            list(LENGTH _hex_list _count)
-            message(STATUS "ICON_FONT: 裁剪模式 - ${_count} 个图标码点")
-
-            execute_process(
-                COMMAND ${_LX_PYTHON}
-                    "${LX_ICON_SCRIPTS_DIR}/subset_icon_font.py"
-                    "${LX_ICON_FONT_FILE}"
-                    "${_subset_ttf}"
-                    ${_hex_list}
-                RESULT_VARIABLE _sub_result
-                OUTPUT_VARIABLE _sub_stdout
-                ERROR_VARIABLE  _sub_stderr
-            )
-            if(NOT _sub_result EQUAL 0)
-                message(WARNING "ICON_FONT: 字体裁剪失败 (exit ${_sub_result})，回退全量模式\n-- stdout:\n${_sub_stdout}\n-- stderr:\n${_sub_stderr}")
-                file(COPY "${LX_ICON_FONT_FILE}" DESTINATION "${_embed_dir}")
-            endif()
-        else()
-            message(STATUS "ICON_FONT: 未检测到 LX_ICON_* 宏使用，复制完整字体")
+        execute_process(
+            COMMAND ${_LX_PYTHON}
+                "${LX_ICON_SCRIPTS_DIR}/subset_icon_font.py"
+                "${LX_ICON_FONT_FILE}"
+                "${_subset_ttf}"
+                ${_hex_list}
+            RESULT_VARIABLE _sub_result
+            OUTPUT_VARIABLE _sub_stdout
+            ERROR_VARIABLE  _sub_stderr
+        )
+        if(NOT _sub_result EQUAL 0)
+            message(WARNING "ICON_FONT: 字体裁剪失败 (exit ${_sub_result})，回退全量模式\n-- stdout:\n${_sub_stdout}\n-- stderr:\n${_sub_stderr}")
             file(COPY "${LX_ICON_FONT_FILE}" DESTINATION "${_embed_dir}")
         endif()
+    else()
+        message(STATUS "ICON_FONT: 未检测到 LX_ICON_* 宏使用，复制完整字体")
+        file(COPY "${LX_ICON_FONT_FILE}" DESTINATION "${_embed_dir}")
     endif()
 
     message(STATUS "ICON_FONT: 已配置 ${target} (字体输出: ${_embed_dir})")
