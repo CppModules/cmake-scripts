@@ -47,5 +47,7 @@ if(NOT TARGET cppmodule::base)
         $<$<PLATFORM_ID:Linux>:_HOST_LINUX_>
         $<$<PLATFORM_ID:Android>:_HOST_ANDROID_>
         $<$<PLATFORM_ID:Darwin>:_HOST_APPLE_>
+        $<$<BOOL:${EMSCRIPTEN}>:_HOST_EMSCRIPTEN_>
+        $<$<STREQUAL:${CMAKE_SYSTEM_NAME},iOS>:_HOST_IOS_>
     )
 endif()

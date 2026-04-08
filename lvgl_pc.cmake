@@ -37,7 +37,9 @@ get_filename_component(LVGLEX_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 
 # 平台模板选择
 if(NOT DEFINED LVGL_TEMPLATE_FILE)
-    if(WIN32)
+    if(EMSCRIPTEN)
+        set(LVGL_TEMPLATE_FILE "${LVGLEX_ROOT_DIR}/privately/lv_conf_template_wasm.h.in")
+    elseif(WIN32)
         set(LVGL_TEMPLATE_FILE "${LVGLEX_ROOT_DIR}/privately/lv_cong_template_win.h.in")
     elseif(ANDROID)
         # TODO: Android 模板
@@ -66,6 +68,9 @@ if(NOT TARGET lvgl)
     if(TARGET lvgl)
         if(TARGET SDL2-static)
             target_link_libraries(lvgl PRIVATE SDL2::SDL2-static)
+        elseif(EMSCRIPTEN)
+            # Emscripten 通过编译选项提供 SDL2
+            target_compile_options(lvgl PRIVATE -sUSE_SDL=2)
         endif()
         if(TARGET freetype)
             target_link_libraries(lvgl PRIVATE freetype)
