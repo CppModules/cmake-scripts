@@ -51,16 +51,19 @@ endif()
 # ==============================================================================
 # 构建 LVGL
 # ==============================================================================
+# 根据平台模板生成 lv_conf.h 到构建目录（多平台隔离）
+set(LVGL_CONF_GEN_DIR "${CMAKE_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${LVGL_CONF_GEN_DIR}")
+
 if(NOT TARGET lvgl)
-    # 根据平台模板生成 lv_conf.h 到 third_party/ 目录
     if(DEFINED LVGL_TEMPLATE_FILE AND EXISTS "${LVGL_TEMPLATE_FILE}")
-        configure_file("${LVGL_TEMPLATE_FILE}" "${CPPMODULE_ROOTPATH}/lv_conf.h" @ONLY)
+        configure_file("${LVGL_TEMPLATE_FILE}" "${LVGL_CONF_GEN_DIR}/lv_conf.h" @ONLY)
     else()
         message(WARNING "[CppModule] No LVGL config template defined for this platform: LVGL_TEMPLATE_FILE=${LVGL_TEMPLATE_FILE}")
     endif()
 
     # 告诉 LVGL 的 CMake 去正确的位置找 lv_conf.h
-    set(LV_BUILD_CONF_PATH "${CPPMODULE_ROOTPATH}/lv_conf.h" CACHE PATH "" FORCE)
+    set(LV_BUILD_CONF_PATH "${LVGL_CONF_GEN_DIR}/lv_conf.h" CACHE PATH "" FORCE)
 
     cppmodule_add_subdirectory(lvgl "${CPPMODULE_ROOTPATH}/lvgl")
 
@@ -81,7 +84,7 @@ endif()
 if(NOT TARGET cppmodule::lvgl)
     add_library(cppmodule::lvgl INTERFACE IMPORTED GLOBAL)
     target_include_directories(cppmodule::lvgl INTERFACE
-        "${CPPMODULE_ROOTPATH}"
+        "${LVGL_CONF_GEN_DIR}"
         "${CPPMODULE_ROOTPATH}/lvgl/src")
     target_link_libraries(cppmodule::lvgl INTERFACE lvgl::lvgl)
 endif()
