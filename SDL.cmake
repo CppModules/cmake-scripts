@@ -16,8 +16,8 @@ if(NOT TARGET cppmodule::sdl)
     add_library(cppmodule::sdl INTERFACE IMPORTED GLOBAL)
     target_link_libraries(cppmodule::sdl INTERFACE SDL2::SDL2main SDL2::SDL2-static)
 
-    # OpenGL 支持 (通过 CPPMODULE_SDL_ENABLE_OPENGL 启用)
-    if(CPPMODULE_SDL_ENABLE_OPENGL)
+    # OpenGL 支持 (通过 LVGLEX_RENDER_SELECTED == OPENGLES 自动启用)
+    if(LVGLEX_RENDER_SELECTED STREQUAL "OPENGLES")
         if(WIN32)
             target_link_libraries(cppmodule::sdl INTERFACE
                 opengl32.lib Winmm Setupapi Imm32 Version dwmapi legacy_stdio_definitions)
