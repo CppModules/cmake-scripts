@@ -36,7 +36,7 @@ set(LVGL_CFG_USE_LINUX_FBDEV 0)
 # 渲染后端覆盖
 if(LVGLEX_RENDER_SELECTED STREQUAL "OPENGLES")
     set(LVGL_CFG_USE_OPENGLES 1)
-    set(LVGL_CFG_USE_DRAW_OPENGLES 1)
+    set(LVGL_CFG_USE_DRAW_OPENGLES 0)
     set(LVGL_CFG_USE_MATRIX 1 CACHE STRING "" FORCE)
     set(LVGL_CFG_USE_FLOAT 1 CACHE STRING "" FORCE)
 elseif(LVGLEX_RENDER_SELECTED STREQUAL "SDLTEXTURE")
@@ -89,6 +89,11 @@ if(NOT TARGET lvgl)
         if(TARGET freetype)
             target_link_libraries(lvgl PRIVATE freetype)
         endif()
+        # GLAD 头文件路径（KHR/khrplatform.h 等 Khronos 标准头文件）
+        if(LVGLEX_RENDER_SELECTED STREQUAL "OPENGLES")
+            target_include_directories(lvgl PRIVATE
+                "${CPPMODULE_ROOTPATH}/lvgl/src/drivers/opengles/glad/include")
+        endif()
     endif()
 endif()
 
@@ -98,4 +103,9 @@ if(NOT TARGET cppmodule::lvgl)
         "${LVGL_CONF_GEN_DIR}"
         "${CPPMODULE_ROOTPATH}/lvgl/src")
     target_link_libraries(cppmodule::lvgl INTERFACE lvgl::lvgl)
+    # GLAD 头文件路径（KHR/khrplatform.h 等 Khronos 标准头文件）
+    if(LVGLEX_RENDER_SELECTED STREQUAL "OPENGLES")
+        target_include_directories(cppmodule::lvgl INTERFACE
+            "${CPPMODULE_ROOTPATH}/lvgl/src/drivers/opengles/glad/include")
+    endif()
 endif()
