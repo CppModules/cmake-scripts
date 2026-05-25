@@ -88,14 +88,15 @@ function(_lx_scan_icon_codepoints target out_var)
 endfunction()
 
 # ==============================================================================
-# target_link_icon_font(<target> [EMBED_DIR <dir>] [EXPORT_ICON_LIST] [IMPORT_FROM <dep1> ...])
+# target_link_icon_font(<target> [EMBED_DIR <dir>] [EXPORT_ICON_LIST] [FULL] [IMPORT_FROM <dep1> ...])
 #
 # 将裁剪后的字体复制到 EMBED_DIR，由后续 target_link_embed 统一嵌入。
 # EXPORT_ICON_LIST: 将扫描到的图标列表导出为目标属性（供下游目标导入）
+# FULL: 跳过裁剪，嵌入完整字体
 # IMPORT_FROM: 从指定依赖目标导入图标列表并合并
 # ==============================================================================
 function(target_link_icon_font target)
-    cmake_parse_arguments(_ARG "EXPORT_ICON_LIST" "EMBED_DIR" "IMPORT_FROM" ${ARGN})
+    cmake_parse_arguments(_ARG "EXPORT_ICON_LIST;FULL" "EMBED_DIR" "IMPORT_FROM" ${ARGN})
 
     set(_out_dir "${CMAKE_BINARY_DIR}/icon_gen/${target}")
     set(_header_dir "${_out_dir}/include")
@@ -190,7 +191,7 @@ function(target_link_icon_font target)
     # ---- 步骤 5: 裁剪或全量复制到 embed 目录 ----
     set(_subset_ttf "${_embed_dir}/MaterialSymbolsOutlined.ttf")
 
-    if(LX_ICON_FULL_FONT)
+    if(_ARG_FULL OR LX_ICON_FULL_FONT)
         file(COPY "${LX_ICON_FONT_FILE}" DESTINATION "${_embed_dir}")
         message(STATUS "ICON_FONT: 全量模式 (LX_ICON_FULL_FONT=ON)")
     elseif(_hex_list)
