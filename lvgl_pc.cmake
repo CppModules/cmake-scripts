@@ -55,7 +55,8 @@ if(NOT DEFINED LVGL_TEMPLATE_FILE)
     elseif(ANDROID)
         # TODO: Android 模板
     elseif(UNIX)
-        # TODO: Linux 模板
+        # UNIX 模板
+        set(LVGL_TEMPLATE_FILE "${LVGLEX_ROOT_DIR}/privately/lv_conf_template_linux.h.in")
     endif()
 endif()
 

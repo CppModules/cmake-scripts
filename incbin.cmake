@@ -139,7 +139,6 @@ if(NOT TARGET cppmodule::incbin)
     )
 endif()
 
-# 非 MSVC 启用汇编语言
 if(NOT MSVC)
     enable_language(ASM)
 endif()
@@ -342,6 +341,16 @@ function(target_link_embed target)
         # .h 结尾
         string(APPEND _h "#ifdef __cplusplus\n}\n#endif\n\n")
         string(APPEND _h "#endif /* ${_hguard} */\n")
+
+        # ELF 下标记不可执行栈，消除链接器 "executable stack" 警告
+        # x86 用 @progbits，ARM 系用 %progbits
+        string(APPEND _asm "#if defined(__ELF__)\n")
+        string(APPEND _asm "#  if defined(__arm__) || defined(__aarch64__)\n")
+        string(APPEND _asm ".section .note.GNU-stack,\"\",%progbits\n")
+        string(APPEND _asm "#  else\n")
+        string(APPEND _asm ".section .note.GNU-stack,\"\",@progbits\n")
+        string(APPEND _asm "#  endif\n")
+        string(APPEND _asm "#endif\n")
 
         # 写入文件
         file(WRITE "${_source}" "${_asm}")
