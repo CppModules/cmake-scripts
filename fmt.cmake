@@ -7,6 +7,9 @@ if(NOT TARGET fmt)
     set(FMT_TEST OFF CACHE BOOL "" FORCE)
     
     cppmodule_add_subdirectory(fmt "${CPPMODULE_ROOTPATH}/fmt")
+    if(EMSCRIPTEN)
+        target_compile_options(fmt PRIVATE "SHELL:-include cstdlib")
+    endif()
 endif()
 
 if(NOT TARGET cppmodule::fmt)

@@ -17,6 +17,10 @@ set(SKIP_INSTALL_ALL ON CACHE BOOL "" FORCE)
 
 cppmodule_add_subdirectory(harfbuzz "${CPPMODULE_ROOTPATH}/harfbuzz")
 
+if(EMSCRIPTEN)
+    target_compile_definitions(harfbuzz PRIVATE HB_NO_PRAGMA_GCC_DIAGNOSTIC_ERROR)
+endif()
+
 if(NOT TARGET cppmodule::harfbuzz)
     add_library(cppmodule::harfbuzz INTERFACE IMPORTED GLOBAL)
     target_link_libraries(cppmodule::harfbuzz INTERFACE harfbuzz)
