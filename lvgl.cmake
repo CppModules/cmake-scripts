@@ -2,7 +2,11 @@ include_guard(GLOBAL)
 include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
 
 if(NOT DEFINED LVGL_CONF_GEN_DIR)
-    set(LVGL_CONF_GEN_DIR "${CMAKE_BINARY_DIR}/generated")
+    if(DEFINED HIYUI_BINARY_DIR)
+        set(LVGL_CONF_GEN_DIR "${HIYUI_BINARY_DIR}/generated")
+    else()
+        set(LVGL_CONF_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+    endif()
 endif()
 file(MAKE_DIRECTORY "${LVGL_CONF_GEN_DIR}")
 

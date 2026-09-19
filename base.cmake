@@ -1,15 +1,20 @@
 include_guard(GLOBAL)
 
-# --- 全局静态编译约束 ---
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static linking" FORCE)
+# --- 静态编译约束 ---
+# 依赖子树默认静态；宿主已显式设置 BUILD_SHARED_LIBS 时不覆盖。
+if(NOT DEFINED BUILD_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Default static linking")
+endif()
 
 if(MSVC)
-    # 强制所有依赖使用静态运行时库 (/MT 或 /MTd)
-    # 这样可以保证生成的 .exe 不依赖 msvcp140.dll 等
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/utf-8>)
-else()
-    add_compile_options("-finput-charset=UTF-8" "-fexec-charset=UTF-8")
+    set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+    # 依赖子树默认静态 CRT；宿主已设置不同值时沿用宿主并给出诊断。
+    set(_cppmodule_msvc_rt "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "${_cppmodule_msvc_rt}")
+    elseif(NOT CMAKE_MSVC_RUNTIME_LIBRARY STREQUAL "${_cppmodule_msvc_rt}")
+        message(WARNING "[CppModule] host CMAKE_MSVC_RUNTIME_LIBRARY='${CMAKE_MSVC_RUNTIME_LIBRARY}' differs from the HIY-UI static CRT policy '${_cppmodule_msvc_rt}'; the HIY-UI subtree keeps the host setting")
+    endif()
 endif()
 
 # --- 路径探测逻辑 ---
@@ -31,7 +36,7 @@ macro(cppmodule_add_subdirectory NAME PATH)
     if(NOT TARGET ${NAME})
         if(EXISTS "${PATH}/CMakeLists.txt")
 
-            add_subdirectory("${PATH}" "${CMAKE_BINARY_DIR}/_deps/${NAME}-build" )
+            add_subdirectory("${PATH}" "${CMAKE_CURRENT_BINARY_DIR}/_deps/${NAME}-build" )
         else()
             message(WARNING "[CppModule] ${NAME} not found at ${PATH}")
         endif()
