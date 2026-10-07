@@ -1,14 +1,17 @@
 include_guard(GLOBAL)
-include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/base.cmake")
 
-# nlohmann/json 是 Header-only 的
+if(NOT TARGET nlohmann_json::nlohmann_json)
+    if(NOT EXISTS "${CPPMODULE_ROOTPATH}/nlohmannjson/CMakeLists.txt")
+        message(FATAL_ERROR "[CppModule] nlohmannjson not found at ${CPPMODULE_ROOTPATH}/nlohmannjson")
+    endif()
+    set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+    set(JSON_CI OFF CACHE BOOL "" FORCE)
+    set(JSON_Install OFF CACHE BOOL "" FORCE)
+    cppmodule_add_subdirectory(nlohmann_json "${CPPMODULE_ROOTPATH}/nlohmannjson")
+endif()
+
 if(NOT TARGET cppmodule::json)
     add_library(cppmodule::json INTERFACE IMPORTED GLOBAL)
-    set(JSON_INCLUDE_DIR "${CPPMODULE_ROOTPATH}/json/include")
-    
-    if(EXISTS "${JSON_INCLUDE_DIR}")
-        target_include_directories(cppmodule::json INTERFACE "${JSON_INCLUDE_DIR}")
-    else()
-        message(FATAL_ERROR "[CppModule] json include directory not found: ${JSON_INCLUDE_DIR}")
-    endif()
+    target_link_libraries(cppmodule::json INTERFACE nlohmann_json::nlohmann_json)
 endif()
