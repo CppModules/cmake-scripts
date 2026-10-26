@@ -18,6 +18,8 @@ if(NOT TARGET lvgl)
     endif()
 
     set(LV_BUILD_CONF_PATH "${LVGL_CONF_GEN_DIR}/lv_conf.h" CACHE PATH "" FORCE)
+    set(CONFIG_LV_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(CONFIG_LV_BUILD_DEMOS OFF CACHE BOOL "" FORCE)
     cppmodule_add_subdirectory(lvgl "${CPPMODULE_ROOTPATH}/lvgl")
 
     if(TARGET lvgl)

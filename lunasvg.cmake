@@ -2,6 +2,7 @@ include_guard(GLOBAL)
 include(${CMAKE_CURRENT_LIST_DIR}/base.cmake)
 
 if(NOT TARGET lunasvg)
+  set(LUNASVG_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   cppmodule_add_subdirectory(lunasvg "${CPPMODULE_ROOTPATH}/lunasvg")
 endif()
 
